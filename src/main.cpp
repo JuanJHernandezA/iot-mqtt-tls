@@ -2,36 +2,63 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <WebServer.h>
+#include "secrets.h"   
 
 // ======================
-// ⚙️ CONFIGURACIÓN WIFI
+// Configuración WiFi
 // ======================
-const char* ssid = "......";
-const char* password = "......";
+void conectarWiFi() {
+  Serial.print("Conectando a WiFi: ");
+  Serial.println(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi conectado!");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+}
 
 // ======================
-// 🌐 CONFIGURACIÓN MQTT (TLS)
+// Configuración MQTT
 // ======================
-const char* mqtt_server = "esp32univalle.duckdns.org";
-const int mqtt_port = 8883;
-const char* mqtt_user = "alvaro";
-const char* mqtt_pass = "supersecreto";
-const char* mqtt_topic = "test/topic";
-
-// Usamos cliente seguro
 WiFiClientSecure secureClient;
 PubSubClient client(secureClient);
 
-// ======================
-// 🔁 FUNCIONES MQTT
-// ======================
+// Callback: recibe mensajes del tópico “in”
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensaje recibido en ");
+  Serial.print(topic);
+  Serial.print(": ");
+  String mensaje;
+  for (int i = 0; i < length; i++) {
+    mensaje += (char)payload[i];
+  }
+  Serial.println(mensaje);
+
+
+  if (mensaje.equalsIgnoreCase("ON")) {
+    Serial.println("Activando sistema de riego...");
+    // digitalWrite(pinRiego, HIGH);
+  } else if (mensaje.equalsIgnoreCase("OFF")) {
+    Serial.println("Apagando sistema de riego...");
+    // digitalWrite(pinRiego, LOW);
+  }
+}
+
+// Conexión al broker MQTT
 void conectarMQTT() {
   while (!client.connected()) {
-    Serial.print("🔌 Conectando al broker MQTT... ");
-    if (client.connect("ESP32Client", mqtt_user, mqtt_pass)) {
-      Serial.println("✅ Conectado!");
+    Serial.print("Conectando al broker MQTT... ");
+    if (client.connect("ESP32Client", MQTT_USER, MQTT_PASS)) {
+      Serial.println("conectado!");
+      client.subscribe(MQTT_TOPIC_IN); 
+      client.setCallback(callback); 
+      Serial.printf("suscrito a: %s\n", MQTT_TOPIC_IN);
     } else {
-      Serial.print("❌ Error, rc=");
+      Serial.print("Error, rc=");
       Serial.print(client.state());
       Serial.println(" — Reintentando en 5s...");
       delay(5000);
@@ -39,6 +66,7 @@ void conectarMQTT() {
   }
 }
 
+// Publicar dato en el tópico “out”
 void enviarDatoAlDominio(int valor) {
   if (!client.connected()) {
     conectarMQTT();
@@ -47,74 +75,38 @@ void enviarDatoAlDominio(int valor) {
   char mensaje[10];
   sprintf(mensaje, "%d", valor);
 
-  if (client.publish(mqtt_topic, mensaje)) {
-    Serial.printf("✅ Dato publicado: %d\n", valor);
+  if (client.publish(MQTT_TOPIC_OUT, mensaje)) {
+    Serial.printf("Dato publicado (%s): %d\n", MQTT_TOPIC_OUT, valor);
   } else {
-    Serial.println("❌ Error al publicar el mensaje MQTT.");
+    Serial.println("Error al publicar el mensaje MQTT.");
   }
 }
 
-// ======================
-// 🖥️ SERVIDOR WEB LOCAL
-// ======================
+
 WebServer server(80);
 
 void handleRoot() {
-  String html = "<html><head><title>Control de Valor</title></head><body>";
-  html += "<h2>Ingrese un número entre 0 y 100</h2>";
-  html += "<form action='/enviar' method='GET'>";
-  html += "<input type='number' name='valor' min='0' max='100' required>";
-  html += "<input type='submit' value='Enviar'>";
-  html += "</form></body></html>";
-  server.send(200, "text/html", html);
+  server.send(200, "text/plain", "Sensor de Humedad activo");
 }
 
-void handleEnviar() {
-  if (server.hasArg("valor")) {
-    int valor = server.arg("valor").toInt();
-    if (valor >= 0 && valor <= 100) {
-      enviarDatoAlDominio(valor);
-      server.send(200, "text/html",
-        "<h3>✅ Valor publicado correctamente: " + String(valor) + "</h3><a href='/'>Volver</a>");
-    } else {
-      server.send(400, "text/html", "<h3>❌ Valor fuera de rango (0–100)</h3><a href='/'>Volver</a>");
-    }
-  } else {
-    server.send(400, "text/html", "<h3>⚠️ No se recibió ningún valor</h3>");
-  }
-}
-
-// ======================
-// 🚀 SETUP
-// ======================
 void setup() {
   Serial.begin(115200);
-  Serial.println("\nIniciando...");
 
-  // Conexión WiFi
-  WiFi.begin(ssid, password);
-  Serial.print("Conectando a WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\n✅ Conectado a WiFi");
-  Serial.print("📶 IP local: ");
-  Serial.println(WiFi.localIP());
+  conectarWiFi();
 
-  // MQTT seguro (ignorar verificación del certificado en desarrollo)
-  secureClient.setInsecure();  // ⚠️ Permite conexión sin verificar CA (solo para pruebas)
-  client.setServer(mqtt_server, mqtt_port);
+  secureClient.setInsecure(); 
+  client.setServer(MQTT_SERVER, MQTT_PORT);
+  client.setCallback(callback);
 
-  // Iniciar servidor web
+  conectarMQTT();
+
   server.on("/", handleRoot);
-  server.on("/enviar", handleEnviar);
   server.begin();
-  Serial.println("🌐 Servidor web iniciado");
+  Serial.println("Servidor Web iniciado en puerto 80");
 }
 
 // ======================
-// 🔁 LOOP
+//Loop principal
 // ======================
 void loop() {
   if (!client.connected()) {
@@ -122,4 +114,9 @@ void loop() {
   }
   client.loop();
   server.handleClient();
+
+  // Ejemplo: lectura simulada de humedad
+  int humedad = random(30, 80);
+  enviarDatoAlDominio(humedad);
+  delay(5000);
 }
