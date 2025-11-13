@@ -25,6 +25,21 @@ jobs:
 
       - name: Set up PlatformIO
         run: pip install platformio
+        # 4️⃣ Generar archivo include/secrets.h con los secretos del repo
+      - name: Generate secrets.h
+        run: |
+          mkdir -p include
+          echo "#pragma once" > include/secrets.h
+          echo "#define WIFI_SSID \"${{ secrets.WIFI_SSID }}\"" >> include/secrets.h
+          echo "#define WIFI_PASS \"${{ secrets.WIFI_PASSWORD }}\"" >> include/secrets.h
+          echo "#define MQTT_SERVER \"${{ secrets.MQTT_SERVER }}\"" >> include/secrets.h
+          echo "#define MQTT_PORT ${{ secrets.MQTT_PORT }}" >> include/secrets.h
+          echo "#define MQTT_USER \"${{ secrets.MQTT_USER }}\"" >> include/secrets.h
+          echo "#define MQTT_PASS \"${{ secrets.MQTT_PASSWORD }}\"" >> include/secrets.h
+          echo "#define MQTT_TOPIC_IN \"dispositivo/device1/in\"" >> include/secrets.h
+          echo "#define MQTT_TOPIC_OUT \"dispositivo/device1/out\"" >> include/secrets.h
+          echo "✅ Archivo secrets.h generado:"
+          cat include/secrets.h
 
       # ✅ Detectar versión desde tag o generar una versión dev
       - name: Set firmware version
