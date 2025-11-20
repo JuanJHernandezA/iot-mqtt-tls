@@ -38,6 +38,10 @@ jobs:
           echo "#define MQTT_PASS \"${{ secrets.MQTT_PASSWORD }}\"" >> include/secrets.h
           echo "#define MQTT_TOPIC_IN \"dispositivo/device1/in\"" >> include/secrets.h
           echo "#define MQTT_TOPIC_OUT \"dispositivo/device1/out\"" >> include/secrets.h
+          echo "#define PAIS \"${{ secrets.PAIS }}\"" >> include/secrets.h
+          echo "#define PROVINCIA \"${{ secrets.PROVINCIA }}\"" >> include/secrets.h
+          echo "#define CIUDAD \"${{ secrets.CIUDAD }}\"" >> include/secrets.h
+          echo "#define ID_DISPOSITIVO \"${{ secrets.ID_DISPOSITIVO }}\"" >> include/secrets.h
           echo "✅ Archivo secrets.h generado:"
           cat include/secrets.h
 
