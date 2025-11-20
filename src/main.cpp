@@ -27,6 +27,14 @@ void conectarWiFi() {
 WiFiClientSecure secureClient;
 PubSubClient client(secureClient);
 
+// Construir tópico MQTT dinámicamente
+String construirTopico(const char* direccion) {
+  String topico = String(PAIS) + "/" + String(PROVINCIA) + "/" + 
+                  String(CIUDAD) + "/" + String(ID_DISPOSITIVO) + "/" + 
+                  String(MQTT_USER) + "/" + String(direccion);
+  return topico;
+}
+
 // Callback: recibe mensajes del tópico “in”
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Mensaje recibido en ");
@@ -54,9 +62,10 @@ void conectarMQTT() {
     Serial.print("Conectando al broker MQTT... ");
     if (client.connect("ESP32Client", MQTT_USER, MQTT_PASS)) {
       Serial.println("conectado!");
-      client.subscribe(MQTT_TOPIC_IN); 
+      String topicoIn = construirTopico("in");
+      client.subscribe(topicoIn.c_str()); 
       client.setCallback(callback); 
-      Serial.printf("suscrito a: %s\n", MQTT_TOPIC_IN);
+      Serial.printf("suscrito a: %s\n", topicoIn.c_str());
     } else {
       Serial.print("Error, rc=");
       Serial.print(client.state());
@@ -66,17 +75,18 @@ void conectarMQTT() {
   }
 }
 
-// Publicar dato en el tópico “out”
+// Publicar dato en el tópico "out" en formato JSON
 void enviarDatoAlDominio(int valor) {
   if (!client.connected()) {
     conectarMQTT();
   }
 
-  char mensaje[10];
-  sprintf(mensaje, "%d", valor);
-
-  if (client.publish(MQTT_TOPIC_OUT, mensaje)) {
-    Serial.printf("Dato publicado (%s): %d\n", MQTT_TOPIC_OUT, valor);
+  // Construir JSON con el valor de humedad
+  String jsonPayload = "{\"humedad\":" + String(valor) + "}";
+  
+  String topicoOut = construirTopico("out");
+  if (client.publish(topicoOut.c_str(), jsonPayload.c_str())) {
+    Serial.printf("Dato publicado (%s): %s\n", topicoOut.c_str(), jsonPayload.c_str());
   } else {
     Serial.println("Error al publicar el mensaje MQTT.");
   }
