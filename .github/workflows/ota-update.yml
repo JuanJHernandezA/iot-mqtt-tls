@@ -92,7 +92,7 @@ jobs:
           print('✅ Mensaje OTA enviado')"
 
         env:
-          DEVICE_TOPIC: dispositivo/device1/ota
+          DEVICE_TOPIC: "colombia/valle/tulua/1/alvaro/ota"
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
