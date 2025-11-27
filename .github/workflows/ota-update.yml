@@ -27,23 +27,23 @@ jobs:
         run: pip install platformio
         # 4️⃣ Generar archivo include/secrets.h con los secretos del repo
       - name: Generate secrets.h
-        run: |
-          mkdir -p include
-          echo "#pragma once" > include/secrets.h
-          echo "#define WIFI_SSID \"${{ secrets.WIFI_SSID }}\"" >> include/secrets.h
-          echo "#define WIFI_PASS \"${{ secrets.WIFI_PASSWORD }}\"" >> include/secrets.h
-          echo "#define MQTT_SERVER \"${{ secrets.MQTT_SERVER }}\"" >> include/secrets.h
-          echo "#define MQTT_PORT ${{ secrets.MQTT_PORT }}" >> include/secrets.h
-          echo "#define MQTT_USER \"${{ secrets.MQTT_USER }}\"" >> include/secrets.h
-          echo "#define MQTT_PASS \"${{ secrets.MQTT_PASSWORD }}\"" >> include/secrets.h
-          echo "#define MQTT_TOPIC_IN \"dispositivo/device1/in\"" >> include/secrets.h
-          echo "#define MQTT_TOPIC_OUT \"dispositivo/device1/out\"" >> include/secrets.h
-          echo "#define PAIS \"${{ secrets.PAIS }}\"" >> include/secrets.h
-          echo "#define PROVINCIA \"${{ secrets.PROVINCIA }}\"" >> include/secrets.h
-          echo "#define CIUDAD \"${{ secrets.CIUDAD }}\"" >> include/secrets.h
-          echo "#define ID_DISPOSITIVO \"${{ secrets.ID_DISPOSITIVO }}\"" >> include/secrets.h
+        run: |     
+          mkdir -p src
+          echo "#pragma once" > src/secrets.h
+          echo "#define WIFI_SSID \"${{ secrets.WIFI_SSID }}\"" >> src/secrets.h
+          echo "#define WIFI_PASS \"${{ secrets.WIFI_PASSWORD }}\"" >> src/secrets.h
+          echo "#define MQTT_SERVER \"${{ secrets.MQTT_SERVER }}\"" >> src/secrets.h
+          echo "#define MQTT_PORT ${{ secrets.MQTT_PORT }}" >> src/secrets.h
+          echo "#define MQTT_USER \"${{ secrets.MQTT_USER }}\"" >> src/secrets.h
+          echo "#define MQTT_PASS \"${{ secrets.MQTT_PASSWORD }}\"" >> src/secrets.h
+          echo "#define MQTT_TOPIC_IN \"dispositivo/device1/in\"" >> src/secrets.h
+          echo "#define MQTT_TOPIC_OUT \"dispositivo/device1/out\"" >> src/secrets.h
+          echo "#define PAIS \"${{ secrets.PAIS }}\"" >> src/secrets.h
+          echo "#define PROVINCIA \"${{ secrets.PROVINCIA }}\"" >> src/secrets.h
+          echo "#define CIUDAD \"${{ secrets.CIUDAD }}\"" >> src/secrets.h
+          echo "#define ID_DISPOSITIVO \"${{ secrets.ID_DISPOSITIVO }}\"" >> src/secrets.h
           echo "✅ Archivo secrets.h generado:"
-          cat include/secrets.h
+          cat src/secrets.h
 
       # ✅ Detectar versión desde tag o generar una versión dev
       - name: Set firmware version
